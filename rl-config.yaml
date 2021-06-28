@@ -1,0 +1,7 @@
+domain: collector
+descriptors:
+  - key: client_cert
+    rate_limit:
+      requests_per_unit: 0
+      unit: minute
+    

@@ -1,0 +1,40 @@
+version: "3"
+
+services:
+  proxy:
+    image: envoyproxy/envoy:v1.18-latest
+    command:
+      - -c /etc/envoy/config.yaml
+    volumes:
+      - ./config.yaml:/etc/envoy/config.yaml
+      - ./certs:/etc/certs
+      - ./activity.pb:/etc/proto/activity.pb
+    network_mode: host
+    depends_on:
+     - ratelimiter
+     - httpbin
+  redis:
+    image: redis:6.0.6
+    network_mode: host
+  ratelimiter:
+    image: envoyproxy/ratelimit:6aaad7c3
+    network_mode: host
+    command: 
+      - /bin/ratelimit
+    environment:
+    - REDIS_SOCKET_TYPE=tcp
+    - REDIS_URL=localhost:6379
+    - RUNTIME_ROOT=/data
+    - RUNTIME_SUBDIRECTORY=ratelimit
+    - RUNTIME_IGNOREDOTFILES=true
+    - RUNTIME_WATCH_ROOT=false
+    - USE_STATSD=false
+    volumes:
+      - ./rl-config.yaml:/data/ratelimit/config/config.yaml
+    depends_on:
+      - redis
+  httpbin:
+    image: kennethreitz/httpbin
+    ports:
+      - 9090:80
+
